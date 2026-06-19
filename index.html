@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Rewind — Time-Travel Debugging</title>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Archivo+Narrow:wght@600;700&family=JetBrains+Mono:wght@500;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#e4e2de",
+                        "secondary": "#5e5e5e",
+                        "inverse-surface": "#30312e",
+                        "secondary-fixed-dim": "#c7c6c6",
+                        "on-primary": "#ffffff",
+                        "surface-dim": "#dbdad6",
+                        "outline-variant": "#c5c5d5",
+                        "on-primary-fixed-variant": "#1c3ca7",
+                        "on-tertiary-fixed": "#341100",
+                        "error": "#ba1a1a",
+                        "primary": "#0e329f",
+                        "inverse-primary": "#b8c4ff",
+                        "surface-tint": "#3a55c0",
+                        "on-error-container": "#93000a",
+                        "surface-bright": "#fbf9f5",
+                        "on-surface": "#1b1c1a",
+                        "on-primary-container": "#bec8ff",
+                        "on-secondary-fixed-variant": "#464747",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "outline": "#757684",
+                        "on-tertiary-container": "#ffbc9a",
+                        "on-primary-fixed": "#001354",
+                        "on-surface-variant": "#444653",
+                        "glow-accent": "rgba(75, 102, 209, 0.25)",
+                        "surface-container-low": "#f5f3ef",
+                        "tertiary-container": "#903c00",
+                        "surface-container-high": "#eae8e4",
+                        "primary-fixed": "#dde1ff",
+                        "primary-container": "#304cb7",
+                        "on-tertiary-fixed-variant": "#793100",
+                        "surface": "#fbf9f5",
+                        "error-container": "#ffdad6",
+                        "secondary-container": "#e1dfdf",
+                        "glass-background": "rgba(226, 226, 226, 0.5)",
+                        "background": "#fbf9f5",
+                        "secondary-fixed": "#e4e2e2",
+                        "tertiary-fixed-dim": "#ffb691",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-on-surface": "#f2f0ec",
+                        "on-error": "#ffffff",
+                        "surface-container": "#f0eeea",
+                        "tertiary-fixed": "#ffdbcb",
+                        "on-tertiary": "#ffffff",
+                        "tertiary": "#6b2b00",
+                        "primary-fixed-dim": "#b8c4ff",
+                        "on-background": "#1b1c1a",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-container": "#636262",
+                        "surface-container-highest": "#e4e2de"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "20px",
+                        "gutter": "24px",
+                        "container-max": "1440px",
+                        "margin-desktop": "64px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Archivo Narrow"],
+                        "display-lg": ["Archivo Narrow"],
+                        "label-caps": ["JetBrains Mono"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "display-lg-mobile": ["Archivo Narrow"],
+                        "code-sm": ["JetBrains Mono"],
+                        "body-md": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["40px", {"lineHeight": "1.0", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "display-lg": ["80px", {"lineHeight": "0.9", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                        "label-caps": ["11px", {"lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "letterSpacing": "-0.01em", "fontWeight": "400"}],
+                        "display-lg-mobile": ["48px", {"lineHeight": "0.95", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                        "code-sm": ["13px", {"lineHeight": "1.4", "letterSpacing": "0", "fontWeight": "500"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        .text-hollow {
+            -webkit-text-stroke: 1.5px #1b1c1a;
+            color: transparent;
+        }
+        .dark .text-hollow {
+            -webkit-text-stroke: 1.5px #fbf9f5;
+        }
+        .mouse-glow {
+            pointer-events: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), var(--glow-color, rgba(75, 102, 209, 0.25)) 0%, transparent var(--radius, 0px));
+            transition: background 0.3s ease-out;
+        }
+        .glass-pill {
+            backdrop-filter: blur(12px);
+            background: rgba(226, 226, 226, 0.5);
+        }
+        .dark .glass-pill {
+            background: rgba(30, 31, 30, 0.5);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        .glass-card {
+            backdrop-filter: blur(24px);
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .dark .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .nav-item-active {
+            background: white;
+            color: #1b1c1a;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .dark .nav-item-active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .mobile-menu-overlay {
+            transform: translateY(-100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .mobile-menu-overlay.active {
+            transform: translateY(0);
+        }
+        .technical-grid {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px);
+        }
+        .dark .technical-grid {
+            background-image: linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+        }
+
+        /* Scroll-triggered animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal-left {
+            opacity: 0;
+            transform: translateX(-40px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .reveal-scale {
+            opacity: 0;
+            transform: scale(0.92);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-scale.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .stagger-1 { transition-delay: 0.1s; }
+        .stagger-2 { transition-delay: 0.2s; }
+        .stagger-3 { transition-delay: 0.3s; }
+        .stagger-4 { transition-delay: 0.4s; }
+
+        /* Hero entrance animations */
+        @keyframes heroFadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes heroImageFloat {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 0.7; transform: scale(1); }
+        }
+        @keyframes lineExpand {
+            from { transform: scaleX(0); }
+            to { transform: scaleX(1); }
+        }
+        .hero-fade-up {
+            animation: heroFadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+        .hero-fade-up-delay-1 {
+            animation: heroFadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
+            opacity: 0;
+        }
+        .hero-fade-up-delay-2 {
+            animation: heroFadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+            opacity: 0;
+        }
+        .hero-fade-up-delay-3 {
+            animation: heroFadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+            opacity: 0;
+        }
+        .hero-image-entrance {
+            animation: heroImageFloat 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+            opacity: 0;
+        }
+        .line-expand {
+            animation: lineExpand 1s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
+            transform: scaleX(0);
+            transform-origin: left;
+        }
+    </style>
+</head>
+<body class="bg-surface-container-low dark:bg-[#0A0A0A] text-on-surface dark:text-on-surface antialiased overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container transition-colors duration-300">
+
+<!-- Hero Section -->
+<main class="min-h-screen bg-surface-container-low dark:bg-[#0A0A0A] relative flex flex-col justify-between p-6 md:p-12 overflow-hidden transition-colors duration-300">
+    <div class="mouse-glow" id="glow-layer" style="--x: 50%; --y: 50%; --radius: 0px; --glow-color: rgba(75, 102, 209, 0.25);"></div>
+
+    <div class="absolute inset-0 z-0 overflow-hidden">
+        <video autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover object-center hero-image-entrance mix-blend-multiply brightness-[1.25] contrast-[1.1] saturate-0 dark:mix-blend-screen dark:invert dark:brightness-[1.4] dark:contrast-[1.2]" src="assets/hero-video.mp4"></video>
+        <div class="absolute inset-0 z-20 pointer-events-none bg-gradient-to-b from-surface-container-low/40 via-transparent to-surface-container-low dark:from-[#0A0A0A]/50 dark:via-transparent dark:to-[#0A0A0A]"></div>
+    </div>
+
+    <!-- Top Navigation Bar -->
+    <nav class="relative z-50 flex justify-between items-center w-full max-w-container-max mx-auto hero-fade-up">
+        <div class="flex items-center gap-2 group cursor-pointer">
+            <span class="material-symbols-outlined text-primary dark:text-inverse-primary font-bold transition-transform group-hover:-rotate-12" style="font-variation-settings: 'FILL' 1;">rowing</span>
+            <span class="font-code-sm text-code-sm font-semibold lowercase tracking-tight dark:text-white">rewind</span>
+        </div>
+        <div class="hidden md:flex glass-pill p-1 rounded-full border border-outline-variant/30 gap-1">
+            <a class="px-4 py-1.5 rounded-full font-body-md text-body-md text-on-surface-variant dark:text-white/60 hover:text-on-surface dark:hover:text-white transition-all" href="#how-it-works">How It Works</a>
+            <a class="px-4 py-1.5 rounded-full font-body-md text-body-md text-on-surface-variant dark:text-white/60 hover:text-on-surface dark:hover:text-white transition-all" href="#features">Features</a>
+            <a class="px-4 py-1.5 rounded-full font-body-md text-body-md text-on-surface-variant dark:text-white/60 hover:text-on-surface dark:hover:text-white transition-all" href="#">SDK</a>
+            <a class="px-4 py-1.5 rounded-full font-body-md text-body-md text-on-surface-variant dark:text-white/60 hover:text-on-surface dark:hover:text-white transition-all" href="#">Docs</a>
+        </div>
+        <div class="flex items-center gap-4">
+            <button aria-label="Toggle dark mode" class="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center text-on-surface dark:text-on-surface" id="theme-toggle">
+                <span class="material-symbols-outlined dark:hidden">dark_mode</span>
+                <span class="material-symbols-outlined hidden dark:block">light_mode</span>
+            </button>
+            <a class="hidden md:flex items-center gap-1 font-body-md text-body-md text-primary dark:text-inverse-primary font-semibold group" href="#">
+                Get Started
+                <span class="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">north_east</span>
+            </a>
+            <button class="md:hidden p-2 text-on-surface dark:text-white relative z-[60]" id="menu-toggle">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="fixed inset-0 z-50 bg-surface/95 dark:bg-[#0A0A0A]/95 backdrop-blur-2xl md:hidden mobile-menu-overlay flex flex-col p-8 pt-24 gap-8" id="mobile-menu">
+        <div class="flex flex-col gap-6">
+            <a class="font-headline-md text-headline-md dark:text-white" href="#how-it-works">How It Works</a>
+            <a class="font-headline-md text-headline-md text-outline dark:text-white/40" href="#features">Features</a>
+            <a class="font-headline-md text-headline-md text-outline dark:text-white/40" href="#">SDK</a>
+            <a class="font-headline-md text-headline-md text-outline dark:text-white/40" href="#">Docs</a>
+        </div>
+        <div class="mt-auto">
+            <button class="w-full bg-on-surface dark:bg-white text-surface dark:text-[#0A0A0A] py-5 rounded-full flex justify-between items-center px-8">
+                <span class="font-body-lg text-body-lg font-bold">Open Dashboard</span>
+                <span class="material-symbols-outlined">north_east</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Hero Content -->
+    <div class="relative z-20 w-full max-w-container-max mx-auto mt-auto pb-8 md:pb-0">
+        <div class="flex flex-col md:flex-row items-end justify-between gap-12">
+            <div class="w-full md:w-auto">
+                <div class="mb-4">
+                    <h1 class="font-display-lg text-display-lg md:text-[86px] leading-[0.85] tracking-[-0.04em] uppercase md:normal-case dark:text-white hero-fade-up-delay-1">
+                        Rewind
+                    </h1>
+                    <h2 class="font-display-lg text-display-lg md:text-[86px] leading-[0.85] tracking-[-0.04em] text-hollow uppercase md:normal-case hero-fade-up-delay-2">
+                        Your Data
+                    </h2>
+                </div>
+                <p class="font-code-sm text-code-sm text-outline dark:text-white/40 uppercase tracking-widest flex items-center gap-2 hero-fade-up-delay-3">
+                    <span class="w-8 h-[1px] bg-outline-variant dark:bg-white/20 line-expand"></span>
+                    time-travel debugging for your database
+                </p>
+            </div>
+            <div class="max-w-md w-full flex flex-col gap-8 md:text-left">
+                <p class="font-body-lg text-body-lg text-on-surface/80 dark:text-white/70 font-light leading-relaxed hero-fade-up-delay-2">
+                    Every database mutation, captured as an immutable event. Scrub through time, diff any two moments, and reconstruct state at any millisecond.
+                </p>
+                <button class="w-full md:w-fit px-10 py-5 bg-on-surface dark:bg-white text-surface dark:text-[#0A0A0A] rounded-full flex items-center justify-center gap-4 group transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-on-surface/10 dark:shadow-white/5 hero-fade-up-delay-3">
+                    <span class="font-body-lg text-body-lg font-bold">Open Dashboard</span>
+                    <span class="material-symbols-outlined text-[20px] transition-transform group-hover:translate-x-1 group-hover:-translate-y-1">north_east</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-outline-variant/30 dark:via-white/10 to-transparent"></div>
+</main>
+
+<!-- How It Works Section -->
+<section class="min-h-screen bg-surface dark:bg-[#0A0A0A] relative py-24 md:py-32 overflow-hidden technical-grid transition-colors duration-300" id="how-it-works">
+    <div class="absolute top-0 right-0 p-8 font-code-sm text-code-sm text-outline/20 dark:text-white/10 pointer-events-none hidden md:block">
+        <p>SYSTEM_CLOCK::TEMPORAL_QUERY_RECEPTOR</p>
+        <p>REPL_LAG: 0.00ms</p>
+    </div>
+
+    <div class="max-w-container-max mx-auto px-6 md:px-12 relative z-10">
+        <div class="mb-20 md:mb-32">
+            <div class="flex items-center gap-4 mb-6 reveal-left">
+                <span class="font-label-caps text-label-caps text-primary dark:text-inverse-primary tracking-widest px-3 py-1 border border-primary/20 dark:border-inverse-primary/20 rounded-full bg-primary/5">01 // PROCESS</span>
+                <div class="h-[1px] flex-grow bg-outline-variant/30 dark:bg-white/10"></div>
+            </div>
+            <h2 class="font-display-lg text-display-lg-mobile md:text-[64px] leading-tight dark:text-white max-w-2xl reveal">
+                How Rewind Works
+            </h2>
+            <p class="font-body-lg text-body-lg text-on-surface-variant dark:text-white/50 max-w-xl mt-6 reveal stagger-1">
+                Underneath the hood, Rewind leverages a log-structured temporal engine designed for millisecond-level precision.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+            <div class="group glass-card p-8 rounded-lg transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 reveal-scale stagger-1">
+                <div class="mb-8 w-12 h-12 flex items-center justify-center rounded-full bg-surface-container dark:bg-white/5 border border-outline-variant/30 dark:border-white/10 text-primary dark:text-inverse-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                    <span class="material-symbols-outlined">history</span>
+                </div>
+                <h3 class="font-headline-md text-[28px] dark:text-white mb-4">Immutable Event Stream</h3>
+                <p class="font-body-md text-body-md text-on-surface-variant dark:text-white/60 leading-relaxed mb-6">
+                    Every database change is stored as a permanent event, not just a state update. We preserve the "why" and "when" behind every single row modification.
+                </p>
+                <div class="pt-4 border-t border-outline-variant/20 dark:border-white/5 font-code-sm text-code-sm text-outline dark:text-white/30">
+                    EVENT_LOG_STRICT: TRUE
+                </div>
+            </div>
+
+            <div class="group glass-card p-8 rounded-lg transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 reveal-scale stagger-2">
+                <div class="mb-8 w-12 h-12 flex items-center justify-center rounded-full bg-surface-container dark:bg-white/5 border border-outline-variant/30 dark:border-white/10 text-primary dark:text-inverse-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                    <span class="material-symbols-outlined">schedule</span>
+                </div>
+                <h3 class="font-headline-md text-[28px] dark:text-white mb-4">Point-in-Time Reconstruction</h3>
+                <p class="font-body-md text-body-md text-on-surface-variant dark:text-white/60 leading-relaxed mb-6">
+                    Rebuild your entire database state at any specific millisecond. Traverse history with our virtual snapshotting engine without performance overhead.
+                </p>
+                <div class="pt-4 border-t border-outline-variant/20 dark:border-white/5 font-code-sm text-code-sm text-outline dark:text-white/30">
+                    RECON_LATENCY: &lt; 12ms
+                </div>
+            </div>
+
+            <div class="group glass-card p-8 rounded-lg transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 reveal-scale stagger-3">
+                <div class="mb-8 w-12 h-12 flex items-center justify-center rounded-full bg-surface-container dark:bg-white/5 border border-outline-variant/30 dark:border-white/10 text-primary dark:text-inverse-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                    <span class="material-symbols-outlined">difference</span>
+                </div>
+                <h3 class="font-headline-md text-[28px] dark:text-white mb-4">Deterministic Diffing</h3>
+                <p class="font-body-md text-body-md text-on-surface-variant dark:text-white/60 leading-relaxed mb-6">
+                    Instantly compare any two moments in history to identify mutations with bit-by-bit precision. Visualize changes across your schema in real-time.
+                </p>
+                <div class="pt-4 border-t border-outline-variant/20 dark:border-white/5 font-code-sm text-code-sm text-outline dark:text-white/30">
+                    DIFF_HASH: SHA-256
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-outline-variant/30 dark:via-white/10 to-transparent"></div>
+</section>
+
+<!-- Features Section -->
+<section class="min-h-screen bg-surface dark:bg-[#0A0A0A] relative py-24 md:py-32 overflow-hidden technical-grid transition-colors duration-300" id="features">
+    <div class="absolute top-0 left-0 p-8 font-code-sm text-code-sm text-outline/20 dark:text-white/10 pointer-events-none hidden md:block">
+        <p>MODULE_TRC :: TELEMETRY_STREAM</p>
+        <p>STATUS: ACTIVE</p>
+    </div>
+
+    <div class="max-w-container-max mx-auto px-6 md:px-12 relative z-10">
+        <div class="mb-20 md:mb-32">
+            <div class="flex items-center gap-4 mb-6 reveal-left">
+                <span class="font-label-caps text-label-caps text-primary dark:text-inverse-primary tracking-widest px-3 py-1 border border-primary/20 dark:border-inverse-primary/20 rounded-full bg-primary/5">02 // CAPABILITIES</span>
+                <div class="h-[1px] flex-grow bg-outline-variant/30 dark:bg-white/10"></div>
+            </div>
+            <h2 class="font-display-lg text-display-lg-mobile md:text-[64px] leading-tight dark:text-white max-w-2xl reveal">
+                Engineered for Precision
+            </h2>
+            <p class="font-body-lg text-body-lg text-on-surface-variant dark:text-white/50 max-w-xl mt-6 reveal stagger-1">
+                Advanced temporal primitives for high-stakes data environments.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+            <div class="group p-8 glass-card rounded-lg hover:border-primary/30 transition-all duration-500 reveal-scale stagger-1">
+                <div class="mb-6 w-12 h-12 flex items-center justify-center rounded-full bg-surface-container dark:bg-white/5 border border-outline-variant/30 dark:border-white/10 text-primary dark:text-inverse-primary group-hover:bg-primary group-hover:text-white transition-all">
+                    <span class="material-symbols-outlined">monitoring</span>
+                </div>
+                <h3 class="font-headline-md text-[24px] dark:text-white mb-3">Real-time Telemetry</h3>
+                <p class="font-body-md text-body-md text-on-surface-variant dark:text-white/60 leading-relaxed mb-6">
+                    Observe every mutation as it happens with microsecond resolution.
+                </p>
+                <div class="font-code-sm text-code-sm text-outline dark:text-white/30 uppercase tracking-widest">
+                    TRC_ID: 0x882F
+                </div>
+            </div>
+
+            <div class="group p-8 glass-card rounded-lg hover:border-primary/30 transition-all duration-500 reveal-scale stagger-2">
+                <div class="mb-6 w-12 h-12 flex items-center justify-center rounded-full bg-surface-container dark:bg-white/5 border border-outline-variant/30 dark:border-white/10 text-primary dark:text-inverse-primary group-hover:bg-primary group-hover:text-white transition-all">
+                    <span class="material-symbols-outlined">fork_right</span>
+                </div>
+                <h3 class="font-headline-md text-[24px] dark:text-white mb-3">Branching States</h3>
+                <p class="font-body-md text-body-md text-on-surface-variant dark:text-white/60 leading-relaxed mb-6">
+                    Fork your database state at any point in history for sandboxed experimentation.
+                </p>
+                <div class="font-code-sm text-code-sm text-outline dark:text-white/30 uppercase tracking-widest">
+                    BRNCH_ID: ALPHA_7
+                </div>
+            </div>
+
+            <div class="group p-8 glass-card rounded-lg hover:border-primary/30 transition-all duration-500 reveal-scale stagger-3">
+                <div class="mb-6 w-12 h-12 flex items-center justify-center rounded-full bg-surface-container dark:bg-white/5 border border-outline-variant/30 dark:border-white/10 text-primary dark:text-inverse-primary group-hover:bg-primary group-hover:text-white transition-all">
+                    <span class="material-symbols-outlined">api</span>
+                </div>
+                <h3 class="font-headline-md text-[24px] dark:text-white mb-3">Temporal API</h3>
+                <p class="font-body-md text-body-md text-on-surface-variant dark:text-white/60 leading-relaxed mb-6">
+                    Programmatic access to your data's timeline via a high-performance GraphQL interface.
+                </p>
+                <div class="font-code-sm text-code-sm text-outline dark:text-white/30 uppercase tracking-widest">
+                    ENDPOINT: /V1/TIMELINE
+                </div>
+            </div>
+
+            <div class="group p-8 glass-card rounded-lg hover:border-primary/30 transition-all duration-500 reveal-scale stagger-4">
+                <div class="mb-6 w-12 h-12 flex items-center justify-center rounded-full bg-surface-container dark:bg-white/5 border border-outline-variant/30 dark:border-white/10 text-primary dark:text-inverse-primary group-hover:bg-primary group-hover:text-white transition-all">
+                    <span class="material-symbols-outlined">layers</span>
+                </div>
+                <h3 class="font-headline-md text-[24px] dark:text-white mb-3">Zero-Copy Snapshots</h3>
+                <p class="font-body-md text-body-md text-on-surface-variant dark:text-white/60 leading-relaxed mb-6">
+                    Create instant, space-efficient restore points without performance degradation.
+                </p>
+                <div class="font-code-sm text-code-sm text-outline dark:text-white/30 uppercase tracking-widest">
+                    SNAP_TYPE: COW_REF
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-outline-variant/30 dark:via-white/10 to-transparent"></div>
+</section>
+
+<script>
+    const themeToggle = document.getElementById('theme-toggle');
+    const glowLayer = document.getElementById('glow-layer');
+    const html = document.documentElement;
+
+    const updateGlowColor = () => {
+        const isDark = html.classList.contains('dark');
+        glowLayer.style.setProperty('--glow-color', isDark ? 'rgba(75, 102, 209, 0.15)' : 'rgba(75, 102, 209, 0.25)');
+    };
+
+    themeToggle.addEventListener('click', () => {
+        html.classList.toggle('dark');
+        updateGlowColor();
+    });
+
+    let currentRadius = 0;
+    const targetRadius = 220;
+
+    document.addEventListener('mousemove', (e) => {
+        const x = (e.clientX / window.innerWidth) * 100;
+        const y = (e.clientY / window.innerHeight) * 100;
+
+        glowLayer.style.setProperty('--x', `${x}%`);
+        glowLayer.style.setProperty('--y', `${y}%`);
+
+        if (currentRadius < targetRadius) {
+            currentRadius += 5;
+            glowLayer.style.setProperty('--radius', `${currentRadius}px`);
+        }
+    });
+
+    const menuToggle = document.getElementById('menu-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const menuIcon = menuToggle.querySelector('.material-symbols-outlined');
+
+    menuToggle.addEventListener('click', () => {
+        const isActive = mobileMenu.classList.toggle('active');
+        menuIcon.textContent = isActive ? 'close' : 'menu';
+        document.body.style.overflow = isActive ? 'hidden' : '';
+    });
+
+    mobileMenu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+            mobileMenu.classList.remove('active');
+            menuIcon.textContent = 'menu';
+            document.body.style.overflow = '';
+        });
+    });
+
+    updateGlowColor();
+
+    // Scroll-triggered reveal animations
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+
+    document.querySelectorAll('.reveal, .reveal-left, .reveal-scale').forEach(el => {
+        revealObserver.observe(el);
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,50 @@
+import {ClerkProvider} from "@clerk/nextjs";
+import type { Metadata } from "next";
+import { Hanken_Grotesk, JetBrains_Mono, Archivo_Narrow } from "next/font/google";
+import { dark } from "@clerk/themes";
+import "./globals.css";
+
+const hanken = Hanken_Grotesk({
+  variable: "--font-hanken",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
+const jetbrains = JetBrains_Mono({
+  variable: "--font-jetbrains",
+  subsets: ["latin"],
+  weight: ["500", "700"],
+});
+
+const archivo = Archivo_Narrow({
+  variable: "--font-archivo",
+  subsets: ["latin"],
+  weight: ["600", "700"],
+});
+
+export const metadata: Metadata = {
+  title: "Rewind — Time-Travel Debugging",
+  description: "Every database mutation, captured as an immutable event. Scrub through time, diff any two moments, and reconstruct state at any millisecond.",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html
+      lang="en"
+      className={`${hanken.variable} ${jetbrains.variable} ${archivo.variable} h-full antialiased`}
+    >
+      <head>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" />
+      </head>
+      <body className="min-h-full flex flex-col font-sans">
+        <ClerkProvider appearance={{ baseTheme: dark }}>
+          {children}
+        </ClerkProvider>
+      </body>
+    </html>
+  );
+}
