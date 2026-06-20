@@ -1,17 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useUser } from "@clerk/nextjs";
 import { GlassCard } from "@/components/ui/glass-card";
-import { LiquidButton } from "@/components/ui/liquid-glass-button";
-import { Save, Check } from "lucide-react";
+import { Info } from "lucide-react";
 
 export default function SettingsPage() {
-  const [snapshotInterval, setSnapshotInterval] = useState("50");
-  const [velocityThreshold, setVelocityThreshold] = useState("200");
-  const [deleteThreshold, setDeleteThreshold] = useState("50");
-  const [saved, setSaved] = useState(false);
-
-  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
+  const { user } = useUser();
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -33,50 +27,54 @@ export default function SettingsPage() {
             </div>
             <div>
               <label className="text-[11px] font-mono text-white/30 uppercase tracking-wider mb-1.5 block">Tenant ID</label>
-              <div className="px-3 py-2 text-[13px] font-mono bg-white/[0.03] rounded-xl text-white/60 border border-white/[0.04]">playground</div>
+              <div className="px-3 py-2 text-[13px] font-mono bg-white/[0.03] rounded-xl text-white/60 border border-white/[0.04]">{user?.id || "—"}</div>
             </div>
           </div>
         </GlassCard>
 
         <GlassCard>
-          <h2 className="text-[14px] font-semibold text-white mb-4">Snapshot Configuration</h2>
-          <div>
-            <label className="text-[11px] font-mono text-white/30 uppercase tracking-wider mb-1.5 block">Snapshot Interval (events)</label>
-            <input type="number" value={snapshotInterval} onChange={(e) => setSnapshotInterval(e.target.value)} className="w-full px-3 py-2 text-[13px] font-mono bg-white/[0.04] border border-white/[0.08] rounded-xl outline-none focus:border-[#b8c4ff]/30 text-white" />
-            <p className="text-[11px] text-white/30 mt-1">Create a snapshot every N events per entity for faster reconstruction</p>
-          </div>
-        </GlassCard>
-
-        <GlassCard>
-          <h2 className="text-[14px] font-semibold text-white mb-4">Anomaly Detection</h2>
+          <h2 className="text-[14px] font-semibold text-white mb-4">Engine Configuration</h2>
           <div className="space-y-4">
-            <div>
-              <label className="text-[11px] font-mono text-white/30 uppercase tracking-wider mb-1.5 block">Write Velocity Threshold (events/min)</label>
-              <input type="number" value={velocityThreshold} onChange={(e) => setVelocityThreshold(e.target.value)} className="w-full px-3 py-2 text-[13px] font-mono bg-white/[0.04] border border-white/[0.08] rounded-xl outline-none focus:border-[#b8c4ff]/30 text-white" />
+            <div className="flex items-center justify-between px-3 py-2.5 bg-white/[0.03] rounded-xl border border-white/[0.04]">
+              <div>
+                <p className="text-[13px] text-white/70">Snapshot Interval</p>
+                <p className="text-[11px] text-white/30 font-mono">Automatic snapshot every N events per entity</p>
+              </div>
+              <span className="text-[13px] font-mono text-[#b8c4ff]">50 events</span>
             </div>
-            <div>
-              <label className="text-[11px] font-mono text-white/30 uppercase tracking-wider mb-1.5 block">DELETE Velocity Threshold (events/min)</label>
-              <input type="number" value={deleteThreshold} onChange={(e) => setDeleteThreshold(e.target.value)} className="w-full px-3 py-2 text-[13px] font-mono bg-white/[0.04] border border-white/[0.08] rounded-xl outline-none focus:border-[#b8c4ff]/30 text-white" />
+            <div className="flex items-center justify-between px-3 py-2.5 bg-white/[0.03] rounded-xl border border-white/[0.04]">
+              <div>
+                <p className="text-[13px] text-white/70">Write Velocity Threshold</p>
+                <p className="text-[11px] text-white/30 font-mono">Triggers anomaly alert when exceeded</p>
+              </div>
+              <span className="text-[13px] font-mono text-[#b8c4ff]">200/min</span>
+            </div>
+            <div className="flex items-center justify-between px-3 py-2.5 bg-white/[0.03] rounded-xl border border-white/[0.04]">
+              <div>
+                <p className="text-[13px] text-white/70">DELETE Velocity Threshold</p>
+                <p className="text-[11px] text-white/30 font-mono">Flags bulk deletes as anomalies</p>
+              </div>
+              <span className="text-[13px] font-mono text-[#b8c4ff]">50/min</span>
             </div>
           </div>
         </GlassCard>
 
         <GlassCard>
           <h2 className="text-[14px] font-semibold text-white mb-4">SDK Integration</h2>
-          <p className="text-[13px] text-white/40 mb-4">Quick start: install the Rewind SDK and add the middleware to your Mongoose models.</p>
+          <p className="text-[13px] text-white/40 mb-4">Add the Rewind middleware to your Mongoose models to start capturing events.</p>
           <pre className="text-[12px] font-mono bg-white/[0.03] rounded-xl p-4 overflow-x-auto text-white/60 border border-white/[0.04]">{`import { rewindMiddleware } from '@rewind/sdk';
 
 const schema = new Schema({ name: String, ... });
 schema.plugin(rewindMiddleware, {
-  endpoint: '/api/chronos/ingest',
-  tenantId: 'your-tenant-id',
+  endpoint: '${typeof window !== "undefined" ? window.location.origin : ""}/api/chronos/ingest',
+  apiKey: 'rw_your-api-key',
 });`}</pre>
         </GlassCard>
 
-        <LiquidButton size="lg" variant="default" onClick={handleSave}>
-          {saved ? <Check className="w-4 h-4 text-emerald-400" /> : <Save className="w-4 h-4 text-[#b8c4ff]" />}
-          <span className="text-[14px] text-white/70">{saved ? "Saved" : "Save Settings"}</span>
-        </LiquidButton>
+        <div className="flex items-start gap-2 px-1">
+          <Info className="w-4 h-4 text-white/20 flex-shrink-0 mt-0.5" />
+          <p className="text-[12px] text-white/20">Engine settings are configured at the infrastructure level. Contact your admin to modify thresholds.</p>
+        </div>
       </div>
     </div>
   );

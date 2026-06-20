@@ -18,7 +18,15 @@ export default function ProfilePage() {
             <span className="material-symbols-outlined text-[40px] text-white/20 animate-spin">progress_activity</span>
           </div>
         ) : isSignedIn ? (
-          <UserProfile />
+          <UserProfile
+            appearance={{
+              elements: {
+                footer: "hidden",
+                badge: "hidden",
+                userProfile: "shadow-none",
+              },
+            }}
+          />
         ) : null}
       </div>
     </div>
