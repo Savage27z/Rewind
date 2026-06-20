@@ -15,6 +15,7 @@ const NAV = [
   { href: "/dashboard/branch", icon: "fork_right", label: "Branch" },
   { href: "/dashboard/investigate", icon: "search_insights", label: "Investigate" },
   { href: "/dashboard/keys", icon: "key", label: "API Keys" },
+  { href: "/dashboard/docs", icon: "menu_book", label: "SDK Docs" },
   { href: "/dashboard/settings", icon: "settings", label: "Settings" },
   { href: "/dashboard/profile", icon: "person", label: "Profile" },
 ];
