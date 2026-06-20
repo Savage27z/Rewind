@@ -1,9 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk";
 import type { RewindEvent } from "./types";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || "",
-});
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "";
 
 export async function explainEvent(
   targetEvent: RewindEvent,
@@ -20,33 +17,59 @@ export async function explainEvent(
     )
     .join("\n");
 
-  const stream = anthropic.messages.stream({
-    model: "claude-sonnet-4-6-20250514",
-    max_tokens: 300,
-    system: systemPrompt,
-    messages: [
-      {
-        role: "user",
-        content: `Explain this database event:\n\nTarget event:\n${targetEvent.eventType} on ${targetEvent.entityType}#${targetEvent.entityId}\nTimestamp: ${targetEvent.timestamp}\nPayload: ${JSON.stringify(targetEvent.payload)}\n\nSurrounding context (chronological):\n${contextStr}`,
-      },
-    ],
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "deepseek/deepseek-chat-v3-0324:free",
+      max_tokens: 300,
+      stream: true,
+      messages: [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: `Explain this database event:\n\nTarget event:\n${targetEvent.eventType} on ${targetEvent.entityType}#${targetEvent.entityId}\nTimestamp: ${targetEvent.timestamp}\nPayload: ${JSON.stringify(targetEvent.payload)}\n\nSurrounding context (chronological):\n${contextStr}`,
+        },
+      ],
+    }),
   });
 
+  if (!response.ok || !response.body) {
+    throw new Error(`OpenRouter error: ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
   const encoder = new TextEncoder();
 
   return new ReadableStream({
     async start(controller) {
-      for await (const event of stream) {
-        if (
-          event.type === "content_block_delta" &&
-          event.delta.type === "text_delta"
-        ) {
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`)
-          );
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const data = line.slice(6).trim();
+          if (data === "[DONE]") {
+            controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+            continue;
+          }
+          try {
+            const parsed = JSON.parse(data);
+            const text = parsed.choices?.[0]?.delta?.content;
+            if (text) {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`));
+            }
+          } catch {}
         }
       }
-      controller.enqueue(encoder.encode("data: [DONE]\n\n"));
       controller.close();
     },
   });
