@@ -25,6 +25,16 @@ const archivo = Archivo_Narrow({
 export const metadata: Metadata = {
   title: "Rewind — Time-Travel Debugging",
   description: "Every database mutation, captured as an immutable event. Scrub through time, diff any two moments, and reconstruct state at any millisecond.",
+  openGraph: {
+    title: "Rewind — Time-Travel Debugging",
+    description: "Every mutation captured. Scrub through time, diff any two moments, and reconstruct state at any millisecond.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Rewind — Time-Travel Debugging",
+    description: "Every mutation captured. Scrub through time, diff any two moments, and reconstruct state at any millisecond.",
+  },
 };
 
 export default function RootLayout({
