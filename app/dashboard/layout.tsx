@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UserButton } from "@clerk/nextjs";
 import { AuroraBackground } from "@/components/ui/aurora-background";
 import { LiquidButton } from "@/components/ui/liquid-glass-button";
@@ -22,6 +22,10 @@ const NAV = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.classList.add("dark");
+  }, []);
 
   return (
     <AuroraBackground className="!h-screen !items-stretch !justify-stretch" showRadialGradient={true}>
