@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --animate-aurora: aurora 60s linear infinite;
   --keyframes-aurora: {
