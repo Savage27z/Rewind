@@ -23,6 +23,7 @@ const archivo = Archivo_Narrow({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://rewind-app.vercel.app"),
   title: "Rewind — Time-Travel Debugging",
   description: "Every database mutation, captured as an immutable event. Scrub through time, diff any two moments, and reconstruct state at any millisecond.",
   openGraph: {

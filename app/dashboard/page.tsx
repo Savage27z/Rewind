@@ -124,7 +124,7 @@ export default function DashboardOverview() {
           entityTypes: types,
         });
         setRecentEvents(events.slice(0, 10));
-      } catch {}
+      } catch (err) { console.error("Dashboard load failed:", err); }
       setLoading(false);
     }
 
