@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 
-// In-memory event bus for SSE
 type Listener = (event: string) => void;
 const listeners = new Set<Listener>();
 
@@ -12,8 +12,10 @@ export function broadcastEvent(event: Record<string, unknown>) {
 }
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const tenantId = searchParams.get("tenantId") || "playground";
+  const { userId } = await auth();
+  if (!userId) {
+    return new Response("Unauthorized", { status: 401 });
+  }
 
   const encoder = new TextEncoder();
 
@@ -22,7 +24,7 @@ export async function GET(request: NextRequest) {
       const listener: Listener = (data: string) => {
         try {
           const parsed = JSON.parse(data);
-          if (parsed.tenantId === tenantId || !parsed.tenantId) {
+          if (parsed.tenantId === userId || !parsed.tenantId) {
             controller.enqueue(encoder.encode(`data: ${data}\n\n`));
           }
         } catch {
@@ -32,7 +34,6 @@ export async function GET(request: NextRequest) {
 
       listeners.add(listener);
 
-      // Send heartbeat every 30s
       const heartbeat = setInterval(() => {
         try {
           controller.enqueue(encoder.encode(": heartbeat\n\n"));
@@ -42,7 +43,6 @@ export async function GET(request: NextRequest) {
         }
       }, 30_000);
 
-      // Cleanup on abort
       request.signal.addEventListener("abort", () => {
         clearInterval(heartbeat);
         listeners.delete(listener);

@@ -1,18 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { queryItems } from "@/lib/dynamo";
 
 export async function GET(request: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
-  const tenantId = searchParams.get("tenantId") || "playground";
   const from = searchParams.get("from");
   const to = searchParams.get("to");
   const entityType = searchParams.get("entityType");
+  const entityId = searchParams.get("entityId");
   const limit = parseInt(searchParams.get("limit") || "50", 10);
 
   try {
     let result;
 
-    if (entityType) {
+    if (entityId) {
+      result = await queryItems({
+        pk: `ENTITY#${entityId}`,
+        skPrefix: "EVENT#",
+        limit,
+        scanForward: false,
+      });
+    } else if (entityType) {
       result = await queryItems({
         pk: `TYPE#${entityType}`,
         skBetween: from && to ? [from, `${to}~`] : undefined,
@@ -27,7 +40,7 @@ export async function GET(request: NextRequest) {
       const endSk = to ? `EVENT#${to}~` : "EVENT#~";
 
       result = await queryItems({
-        pk: `TENANT#${tenantId}`,
+        pk: `TENANT#${userId}`,
         skBetween: [startSk, endSk],
         limit,
         scanForward: false,

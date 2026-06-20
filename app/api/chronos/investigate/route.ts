@@ -1,17 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { ulid } from "ulid";
 import { putItem, queryItems, getItem } from "@/lib/dynamo";
 import type { Investigation } from "@/lib/types";
 
 export async function GET(request: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
-  const tenantId = searchParams.get("tenantId") || "playground";
   const investigationId = searchParams.get("id");
 
   try {
     if (investigationId) {
       const item = await getItem(
-        `TENANT#${tenantId}`,
+        `TENANT#${userId}`,
         `INVESTIGATION#${investigationId}`
       );
       if (!item) {
@@ -21,7 +26,7 @@ export async function GET(request: NextRequest) {
     }
 
     const result = await queryItems({
-      pk: `TENANT#${tenantId}`,
+      pk: `TENANT#${userId}`,
       skPrefix: "INVESTIGATION#",
       limit: 50,
       scanForward: false,
@@ -35,16 +40,20 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
-    const tenantId = body.tenantId || "playground";
     const investigationId = ulid();
 
     const investigation: Investigation = {
       investigationId,
-      tenantId,
+      tenantId: userId,
       title: body.title || "Untitled Investigation",
-      createdBy: body.createdBy || "anonymous",
+      createdBy: userId,
       createdAt: new Date().toISOString(),
       pinnedTimestamps: body.pinnedTimestamps || [],
       annotations: body.annotations || [],
@@ -52,7 +61,7 @@ export async function POST(request: NextRequest) {
     };
 
     await putItem({
-      PK: `TENANT#${tenantId}`,
+      PK: `TENANT#${userId}`,
       SK: `INVESTIGATION#${investigationId}`,
       ...investigation,
     });
@@ -65,9 +74,13 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
-    const tenantId = body.tenantId || "playground";
     const { investigationId, ...updates } = body;
 
     if (!investigationId) {
@@ -78,7 +91,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const existing = await getItem(
-      `TENANT#${tenantId}`,
+      `TENANT#${userId}`,
       `INVESTIGATION#${investigationId}`
     );
 
@@ -88,7 +101,7 @@ export async function PUT(request: NextRequest) {
 
     const updated = { ...existing, ...updates };
     await putItem({
-      PK: `TENANT#${tenantId}`,
+      PK: `TENANT#${userId}`,
       SK: `INVESTIGATION#${investigationId}`,
       ...updated,
     });

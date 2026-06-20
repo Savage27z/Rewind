@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { queryItems } from "@/lib/dynamo";
 
 export async function GET(request: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
-  const tenantId = searchParams.get("tenantId") || "playground";
   const limit = parseInt(searchParams.get("limit") || "100", 10);
 
   try {
     const result = await queryItems({
-      pk: `TENANT#${tenantId}`,
+      pk: `TENANT#${userId}`,
       skPrefix: "ENTITY#",
       limit,
     });
