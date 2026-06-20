@@ -40,7 +40,7 @@ export default function EntityDetailPage() {
   useEffect(() => {
     async function load() {
       try {
-        const timelineRes = await fetch(`/api/chronos/timeline?tenantId=playground&entityId=${entityId}&limit=200`);
+        const timelineRes = await fetch(`/api/chronos/timeline?entityId=${entityId}&limit=200`);
         const timeline = await timelineRes.json();
         const items = (timeline.items || []).sort((a: TimelineEvent, b: TimelineEvent) => a.timestamp.localeCompare(b.timestamp));
         setEvents(items);
@@ -75,7 +75,7 @@ export default function EntityDetailPage() {
       const res = await fetch("/api/chronos/explain", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ entityId, eventId: event.eventId, tenantId: "playground" }),
+        body: JSON.stringify({ entityId, eventId: event.eventId }),
       });
       const reader = res.body?.getReader();
       if (!reader) return;

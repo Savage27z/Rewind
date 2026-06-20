@@ -23,13 +23,14 @@ function EntitiesPageInner() {
   const typeFilter = searchParams.get("type");
   const [entities, setEntities] = useState<Entity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetch("/api/chronos/entities?tenantId=playground")
+    fetch("/api/chronos/entities")
       .then((r) => r.json())
       .then((data) => setEntities(data.items || []))
-      .catch(() => {})
+      .catch(() => setError("Failed to load entities"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -76,7 +77,7 @@ function EntitiesPageInner() {
 
         {/* Table */}
         <GlassCard noPadding>
-          <div className="grid grid-cols-[1fr_120px_180px_180px_40px] gap-4 px-5 py-3 border-b border-white/[0.06] text-[11px] font-mono text-white/30 uppercase tracking-wider">
+          <div className="hidden md:grid grid-cols-[1fr_120px_180px_180px_40px] gap-4 px-5 py-3 border-b border-white/[0.06] text-[11px] font-mono text-white/30 uppercase tracking-wider">
             <span>Entity ID</span>
             <span>Type</span>
             <span>Created</span>
@@ -86,6 +87,11 @@ function EntitiesPageInner() {
           {loading ? (
             <div className="p-8 text-center">
               <span className="material-symbols-outlined text-[32px] text-white/20 animate-spin">progress_activity</span>
+            </div>
+          ) : error ? (
+            <div className="p-8 text-center">
+              <span className="material-symbols-outlined text-[40px] text-red-400/40">error</span>
+              <p className="text-[14px] text-red-400/60 mt-2">{error}</p>
             </div>
           ) : filtered.length === 0 ? (
             <div className="p-8 text-center">
@@ -97,13 +103,16 @@ function EntitiesPageInner() {
               <Link
                 key={entity.entityId}
                 href={`/dashboard/entities/${entity.entityId}`}
-                className="grid grid-cols-[1fr_120px_180px_180px_40px] gap-4 px-5 py-3.5 hover:bg-white/[0.04] transition-all border-b border-white/[0.03] last:border-0 items-center group"
+                className="block md:grid md:grid-cols-[1fr_120px_180px_180px_40px] gap-4 px-5 py-3.5 hover:bg-white/[0.04] transition-all border-b border-white/[0.03] last:border-0 items-center group"
               >
-                <span className="text-[14px] font-mono text-white truncate">{entity.entityId}</span>
-                <span className="text-[12px] font-mono text-[#b8c4ff] bg-[#b8c4ff]/10 px-2 py-0.5 rounded-md w-fit border border-[#b8c4ff]/10">{entity.entityType}</span>
-                <span className="text-[12px] font-mono text-white/30 tabular-nums">{new Date(entity.createdAt).toLocaleString()}</span>
-                <span className="text-[12px] font-mono text-white/30 tabular-nums">{new Date(entity.lastEventAt).toLocaleString()}</span>
-                <ChevronRight className="w-4 h-4 text-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="flex items-center justify-between md:block">
+                  <span className="text-[14px] font-mono text-white truncate">{entity.entityId}</span>
+                  <span className="text-[12px] font-mono text-[#b8c4ff] bg-[#b8c4ff]/10 px-2 py-0.5 rounded-md w-fit border border-[#b8c4ff]/10 md:hidden">{entity.entityType}</span>
+                </div>
+                <span className="text-[12px] font-mono text-[#b8c4ff] bg-[#b8c4ff]/10 px-2 py-0.5 rounded-md w-fit border border-[#b8c4ff]/10 hidden md:inline">{entity.entityType}</span>
+                <span className="text-[12px] font-mono text-white/30 tabular-nums hidden md:block">{new Date(entity.createdAt).toLocaleString()}</span>
+                <span className="text-[12px] font-mono text-white/30 tabular-nums mt-1 md:mt-0 block">{new Date(entity.lastEventAt).toLocaleString()}</span>
+                <ChevronRight className="w-4 h-4 text-white/20 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block" />
               </Link>
             ))
           )}

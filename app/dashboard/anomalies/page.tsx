@@ -20,13 +20,14 @@ interface Anomaly {
 export default function AnomaliesPage() {
   const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [filter, setFilter] = useState<string>("all");
 
   useEffect(() => {
-    fetch("/api/chronos/anomalies?tenantId=playground")
+    fetch("/api/chronos/anomalies")
       .then((r) => r.json())
       .then((data) => setAnomalies(data.items || []))
-      .catch(() => {})
+      .catch(() => setError("Failed to load anomalies"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -63,6 +64,11 @@ export default function AnomaliesPage() {
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <span className="material-symbols-outlined text-[40px] text-white/20 animate-spin">progress_activity</span>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <span className="material-symbols-outlined text-[40px] text-red-400/40">error</span>
+            <p className="text-[14px] text-red-400/60 mt-2">{error}</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-12">

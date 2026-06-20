@@ -38,10 +38,10 @@ export default function InvestigationDetailPage() {
   const [newNote, setNewNote] = useState("");
 
   useEffect(() => {
-    fetch(`/api/chronos/investigate?tenantId=playground&id=${investigationId}`)
+    fetch(`/api/chronos/investigate?id=${investigationId}`)
       .then((r) => r.json())
       .then((data) => setInvestigation(data))
-      .catch(() => {})
+      .catch(() => setInvestigation(null))
       .finally(() => setLoading(false));
   }, [investigationId]);
 
@@ -54,7 +54,7 @@ export default function InvestigationDetailPage() {
     await fetch("/api/chronos/investigate", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...updated, investigationId, tenantId: "playground" }),
+      body: JSON.stringify({ ...updated, investigationId,  }),
     });
     setInvestigation(updated);
     setNewPin({ label: "", timestamp: "", entityId: "" });
@@ -67,7 +67,7 @@ export default function InvestigationDetailPage() {
     await fetch("/api/chronos/investigate", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...updated, investigationId, tenantId: "playground" }),
+      body: JSON.stringify({ ...updated, investigationId,  }),
     });
     setInvestigation(updated);
     setNewNote("");

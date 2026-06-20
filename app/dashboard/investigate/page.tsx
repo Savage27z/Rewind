@@ -23,10 +23,10 @@ export default function InvestigatePage() {
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    fetch("/api/chronos/investigate?tenantId=playground")
+    fetch("/api/chronos/investigate")
       .then((r) => r.json())
       .then((data) => setInvestigations(data.items || []))
-      .catch(() => {})
+      .catch(() => setInvestigations([]))
       .finally(() => setLoading(false));
   }, []);
 
@@ -37,7 +37,7 @@ export default function InvestigatePage() {
       const res = await fetch("/api/chronos/investigate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: newTitle, tenantId: "playground" }),
+        body: JSON.stringify({ title: newTitle }),
       });
       const data = await res.json();
       setInvestigations((prev) => [data, ...prev]);

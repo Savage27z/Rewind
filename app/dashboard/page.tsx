@@ -103,9 +103,9 @@ export default function DashboardOverview() {
     async function load() {
       try {
         const [entitiesRes, timelineRes, anomaliesRes] = await Promise.all([
-          fetch("/api/chronos/entities?tenantId=playground"),
-          fetch("/api/chronos/timeline?tenantId=playground&limit=20"),
-          fetch("/api/chronos/anomalies?tenantId=playground"),
+          fetch("/api/chronos/entities"),
+          fetch("/api/chronos/timeline?limit=20"),
+          fetch("/api/chronos/anomalies"),
         ]);
 
         const entities = await entitiesRes.json();
@@ -221,15 +221,30 @@ schema.plugin(rewindMiddleware, {
               />
             </div>
 
-            {/* Waiting indicator */}
-            {hasKeys && (
-              <GlassCard>
-                <div className="flex items-center justify-center gap-3 py-4">
-                  <span className="material-symbols-outlined text-[24px] text-[#b8c4ff] animate-spin">progress_activity</span>
-                  <p className="text-[14px] text-white/50">Waiting for your first event...</p>
-                </div>
-              </GlassCard>
-            )}
+            {/* Demo data or waiting */}
+            <GlassCard>
+              <div className="flex flex-col items-center justify-center gap-3 py-4">
+                <p className="text-[14px] text-white/50">Want to explore with sample data first?</p>
+                <button
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      await fetch("/api/seed-demo", { method: "POST" });
+                      window.location.reload();
+                    } catch {}
+                  }}
+                  className="px-6 py-2.5 rounded-xl bg-[#b8c4ff]/15 border border-[#b8c4ff]/20 text-[#b8c4ff] text-[13px] font-semibold hover:bg-[#b8c4ff]/25 transition-colors cursor-pointer"
+                >
+                  Load Demo Data
+                </button>
+                {hasKeys && (
+                  <p className="text-[12px] text-white/30 mt-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                    Or waiting for your first real event...
+                  </p>
+                )}
+              </div>
+            </GlassCard>
           </>
         ) : (
           <>

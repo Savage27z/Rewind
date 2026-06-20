@@ -41,7 +41,7 @@ export default function BranchPage() {
         body: JSON.stringify({
           entityId, forkTimestamp: new Date(forkTimestamp).toISOString(),
           omitEventIds: omitEventIds ? omitEventIds.split(",").map((s) => s.trim()) : undefined,
-          syntheticEvents, tenantId: "playground",
+          syntheticEvents,
         }),
       });
       const data = await res.json();
