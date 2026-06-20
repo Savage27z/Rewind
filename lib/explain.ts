@@ -24,7 +24,7 @@ export async function explainEvent(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "deepseek/deepseek-chat-v3-0324:free",
+      model: "nex-agi/nex-n2-pro:free",
       max_tokens: 300,
       stream: true,
       messages: [
