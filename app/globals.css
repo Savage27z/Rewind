@@ -61,6 +61,16 @@ body {
   color: var(--color-foreground);
 }
 
+/* Hide raw icon text until Material Symbols font loads */
+.material-symbols-outlined {
+  overflow: hidden;
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+  line-height: 1;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
