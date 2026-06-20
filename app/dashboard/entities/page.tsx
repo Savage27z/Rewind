@@ -86,7 +86,7 @@ function EntitiesPageInner() {
           </div>
           {loading ? (
             <div className="p-8 text-center">
-              <span className="material-symbols-outlined text-[32px] text-white/20 animate-spin">progress_activity</span>
+              <div className="spinner" style={{ width: 32, height: 32 }} />
             </div>
           ) : error ? (
             <div className="p-8 text-center">

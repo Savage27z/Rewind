@@ -63,7 +63,7 @@ export default function AnomaliesPage() {
       <div className="p-6 space-y-3">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <span className="material-symbols-outlined text-[40px] text-white/20 animate-spin">progress_activity</span>
+            <div className="spinner" style={{ width: 40, height: 40 }} />
           </div>
         ) : error ? (
           <div className="text-center py-12">

@@ -130,7 +130,7 @@ export default function KeysPage() {
           <h2 className="text-[14px] font-semibold text-white mb-4">Your Keys</h2>
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <span className="material-symbols-outlined text-[40px] text-white/20 animate-spin">progress_activity</span>
+              <div className="spinner" style={{ width: 40, height: 40 }} />
             </div>
           ) : keys.length === 0 ? (
             <GlassCard>

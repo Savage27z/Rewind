@@ -239,7 +239,7 @@ schema.plugin(rewindMiddleware, {
                 </button>
                 {hasKeys && (
                   <p className="text-[12px] text-white/30 mt-2 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                    <div className="spinner" style={{ width: 16, height: 16 }} />
                     Or waiting for your first real event...
                   </p>
                 )}
@@ -269,7 +269,7 @@ schema.plugin(rewindMiddleware, {
               <GlassCard noPadding>
                 {loading ? (
                   <div className="p-8 text-center">
-                    <span className="material-symbols-outlined text-[32px] text-white/20 animate-spin">progress_activity</span>
+                    <div className="spinner" style={{ width: 32, height: 32 }} />
                     <p className="text-[13px] text-white/30 mt-2 font-mono">Loading events...</p>
                   </div>
                 ) : (

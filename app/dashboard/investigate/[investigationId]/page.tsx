@@ -73,7 +73,7 @@ export default function InvestigationDetailPage() {
     setNewNote("");
   }, [investigation, investigationId, newNote]);
 
-  if (loading) return <div className="flex-1 flex items-center justify-center"><span className="material-symbols-outlined text-[40px] text-white/20 animate-spin">progress_activity</span></div>;
+  if (loading) return <div className="flex-1 flex items-center justify-center"><div className="spinner" style={{ width: 40, height: 40 }} /></div>;
   if (!investigation) return <div className="flex-1 flex items-center justify-center"><p className="text-white/40">Investigation not found</p></div>;
 
   return (

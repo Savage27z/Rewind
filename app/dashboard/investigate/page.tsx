@@ -71,7 +71,7 @@ export default function InvestigatePage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <span className="material-symbols-outlined text-[40px] text-white/20 animate-spin">progress_activity</span>
+            <div className="spinner" style={{ width: 40, height: 40 }} />
           </div>
         ) : investigations.length === 0 ? (
           <div className="text-center py-12">

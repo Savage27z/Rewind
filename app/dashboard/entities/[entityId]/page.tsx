@@ -115,7 +115,7 @@ export default function EntityDetailPage() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <span className="material-symbols-outlined text-[40px] text-white/20 animate-spin">progress_activity</span>
+        <div className="spinner" style={{ width: 40, height: 40 }} />
       </div>
     );
   }
