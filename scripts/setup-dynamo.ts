@@ -52,14 +52,7 @@ async function setup() {
             { AttributeName: "GSI1SK", KeyType: "RANGE" },
           ],
           Projection: { ProjectionType: "ALL" },
-          ...(isLocal
-            ? {}
-            : {
-                ProvisionedThroughput: {
-                  ReadCapacityUnits: 5,
-                  WriteCapacityUnits: 5,
-                },
-              }),
+          ProvisionedThroughput: undefined,
         },
         {
           IndexName: "GSI2",
@@ -68,24 +61,10 @@ async function setup() {
             { AttributeName: "GSI2SK", KeyType: "RANGE" },
           ],
           Projection: { ProjectionType: "ALL" },
-          ...(isLocal
-            ? {}
-            : {
-                ProvisionedThroughput: {
-                  ReadCapacityUnits: 5,
-                  WriteCapacityUnits: 5,
-                },
-              }),
+          ProvisionedThroughput: undefined,
         },
       ],
-      ...(isLocal
-        ? { BillingMode: "PAY_PER_REQUEST" }
-        : {
-            ProvisionedThroughput: {
-              ReadCapacityUnits: 10,
-              WriteCapacityUnits: 10,
-            },
-          }),
+      BillingMode: "PAY_PER_REQUEST",
     })
   );
 
