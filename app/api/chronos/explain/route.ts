@@ -1,9 +1,18 @@
 import { NextRequest } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { explainEvent } from "@/lib/explain";
 import { getEventsForEntity } from "@/lib/event-store";
 import type { RewindEvent } from "@/lib/types";
 
 export async function POST(request: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized" }),
+      { status: 401, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
   try {
     const { eventId, entityId } = await request.json();
 
