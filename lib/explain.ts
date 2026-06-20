@@ -48,6 +48,7 @@ export async function explainEvent(
   return new ReadableStream({
     async start(controller) {
       let buffer = "";
+      let sentDone = false;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -59,6 +60,7 @@ export async function explainEvent(
           const data = line.slice(6).trim();
           if (data === "[DONE]") {
             controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+            sentDone = true;
             continue;
           }
           try {
@@ -69,6 +71,9 @@ export async function explainEvent(
             }
           } catch {}
         }
+      }
+      if (!sentDone) {
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
       }
       controller.close();
     },

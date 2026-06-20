@@ -17,6 +17,7 @@ interface ApiKey {
 export default function KeysPage() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
   const [newKeyRaw, setNewKeyRaw] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -29,7 +30,7 @@ export default function KeysPage() {
       const res = await fetch("/api/keys");
       const data = await res.json();
       setKeys(data.keys || []);
-    } catch {}
+    } catch { setError("Failed to load API keys"); }
     setLoading(false);
   }, []);
 
@@ -131,6 +132,11 @@ export default function KeysPage() {
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="spinner" style={{ width: 40, height: 40 }} />
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <span className="material-symbols-outlined text-[40px] text-red-400/40">error</span>
+              <p className="text-[14px] text-red-400/60 mt-2">{error}</p>
             </div>
           ) : keys.length === 0 ? (
             <GlassCard>

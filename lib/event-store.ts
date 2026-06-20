@@ -78,7 +78,7 @@ export async function ingestEvent(payload: IngestPayload): Promise<{
   }
 
   // 5. Run anomaly checks (non-blocking)
-  checkAnomalies(event).catch(() => {});
+  checkAnomalies(event).catch((err) => console.error("Anomaly check failed:", err));
 
   return { eventId, timestamp, sequenceNumber: payload.sequenceNumber };
 }

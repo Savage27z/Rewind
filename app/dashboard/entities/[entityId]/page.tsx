@@ -33,6 +33,7 @@ export default function EntityDetailPage() {
   const [scrubState, setScrubState] = useState<Record<string, unknown> | null>(null);
   const [diff, setDiff] = useState<DiffChange[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [explaining, setExplaining] = useState(false);
   const [explanation, setExplanation] = useState("");
   const scrubberRef = useRef<HTMLDivElement>(null);
@@ -45,7 +46,7 @@ export default function EntityDetailPage() {
         const items = (timeline.items || []).sort((a: TimelineEvent, b: TimelineEvent) => a.timestamp.localeCompare(b.timestamp));
         setEvents(items);
         if (items.length > 0) setSelectedEvent(items[items.length - 1]);
-      } catch {}
+      } catch { setError("Failed to load entity timeline"); }
       setLoading(false);
     }
     load();
@@ -116,6 +117,15 @@ export default function EntityDetailPage() {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="spinner" style={{ width: 40, height: 40 }} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center flex-col gap-2">
+        <span className="material-symbols-outlined text-[40px] text-red-400/40">error</span>
+        <p className="text-[14px] text-red-400/60">{error}</p>
       </div>
     );
   }
