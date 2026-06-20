@@ -51,6 +51,7 @@ export default function RootLayout({
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" />
       </head>
       <body className="min-h-full flex flex-col font-sans">
+        {/* @ts-expect-error Clerk theme type mismatch between versions */}
         <ClerkProvider appearance={{ baseTheme: dark }}>
           {children}
         </ClerkProvider>
