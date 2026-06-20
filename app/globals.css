@@ -62,11 +62,8 @@ body {
 }
 
 /* Hide icon text until Material Symbols font loads */
-.material-symbols-outlined {
+html:not(.fonts-ready) .material-symbols-outlined {
   visibility: hidden;
-}
-.fonts-ready .material-symbols-outlined {
-  visibility: visible;
 }
 
 /* CSS-only spinner (no font dependency) */

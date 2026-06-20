@@ -54,7 +54,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" />
-        <script dangerouslySetInnerHTML={{ __html: `document.fonts.ready.then(function(){document.documentElement.classList.add("fonts-ready")})` }} />
+        <script dangerouslySetInnerHTML={{ __html: `(function(){var d=document.documentElement;if(d.classList.contains("fonts-ready"))return;function c(){d.classList.add("fonts-ready")}if(document.fonts&&document.fonts.check("24px Material Symbols Outlined")){c()}else if(document.fonts){document.fonts.ready.then(c)}else{c()}})()` }} />
       </head>
       <body className="min-h-full flex flex-col font-sans">
         {/* @ts-expect-error Clerk theme type mismatch between versions */}
