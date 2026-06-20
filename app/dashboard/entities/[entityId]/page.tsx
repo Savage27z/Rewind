@@ -78,8 +78,18 @@ export default function EntityDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ entityId, eventId: event.eventId }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Request failed" }));
+        setExplanation(`Error: ${err.error || res.statusText}`);
+        setExplaining(false);
+        return;
+      }
       const reader = res.body?.getReader();
-      if (!reader) return;
+      if (!reader) {
+        setExplanation("Error: No response stream");
+        setExplaining(false);
+        return;
+      }
       const decoder = new TextDecoder();
       let text = "";
       let buffer = "";
@@ -102,7 +112,10 @@ export default function EntityDetailPage() {
           } catch {}
         }
       }
-    } catch {}
+      if (!text) setExplanation("No explanation generated. The AI model may be unavailable.");
+    } catch {
+      setExplanation("Error: Could not connect to AI service.");
+    }
     setExplaining(false);
   }, [entityId]);
 
@@ -248,13 +261,20 @@ export default function EntityDetailPage() {
               </GlassCard>
 
               {/* AI Explanation */}
-              {explanation && (
+              {(explaining || explanation) && (
                 <GlassCard className="!border-[#b8c4ff]/15">
                   <div className="flex items-center gap-2 mb-3">
                     <Sparkles className="w-4 h-4 text-[#b8c4ff]" />
                     <h3 className="text-[13px] font-semibold text-[#b8c4ff]">AI Explanation</h3>
                   </div>
-                  <p className="text-[14px] text-white/60 leading-relaxed whitespace-pre-wrap">{explanation}</p>
+                  {explanation ? (
+                    <p className="text-[14px] text-white/60 leading-relaxed whitespace-pre-wrap">{explanation}</p>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <div className="spinner" style={{ width: 16, height: 16 }} />
+                      <span className="text-[13px] text-white/30">Thinking...</span>
+                    </div>
+                  )}
                 </GlassCard>
               )}
 
