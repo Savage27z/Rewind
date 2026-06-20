@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { explainEvent } from "@/lib/explain";
 import { getEventsForEntity } from "@/lib/event-store";
-import type { RewindEvent } from "@/lib/types";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   const { userId } = await auth();
@@ -10,6 +10,21 @@ export async function POST(request: NextRequest) {
     return new Response(
       JSON.stringify({ error: "Unauthorized" }),
       { status: 401, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  const { allowed, retryAfterMs } = rateLimit(`explain:${userId}`, 10, 60_000);
+  if (!allowed) {
+    return new Response(
+      JSON.stringify({ error: "Rate limit exceeded. Try again shortly." }),
+      {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": String(Math.ceil(retryAfterMs / 1000)),
+          "X-RateLimit-Remaining": "0",
+        },
+      }
     );
   }
 
