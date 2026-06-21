@@ -61,10 +61,7 @@ body {
   color: var(--color-foreground);
 }
 
-/* Hide icon text until Material Symbols font loads */
-html:not(.fonts-ready) .material-symbols-outlined {
-  visibility: hidden;
-}
+/* Material Symbols: use display=block in the link tag to avoid text flash */
 
 /* CSS-only spinner (no font dependency) */
 .spinner {
